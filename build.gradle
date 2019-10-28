@@ -1,0 +1,144 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'base'
+apply plugin: 'eclipse'
+
+group = 'com'
+version = '0.0.1-SNAPSHOT'
+
+description = """Selenium Demo Using POM"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
+
+configurations {
+    agent
+}
+repositories {        
+    maven { url "http://repo.maven.apache.org/maven2" }
+}
+dependencies {
+    compile group: 'com.beust', name: 'jcommander', version:'1.64'
+    compile group: 'org.uncommons', name: 'reportng', version:'1.1.4'
+    compile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '3.141.59'
+    compile group: 'org.yaml', name: 'snakeyaml', version:'1.17'
+    compile group: 'org.testng', name: 'testng', version: '6.14.3'
+    compile group: 'org.apache.velocity', name: 'velocity', version:'1.7'
+    compile group: 'velocity', name: 'velocity-dep', version:'1.4'
+    compile group: 'com.aventstack', name: 'extentreports', version:'3.0.6'
+    compile group: 'log4j', name: 'log4j', version:'1.2.17'
+    compile group: 'com.codoid.products', name: 'fillo', version:'1.15'
+    compile group: 'com.google.inject', name: 'guice', version:'4.1.0'
+    compile group: 'commons-io', name: 'commons-io', version: '2.6'
+	compile group: 'commons-validator', name: 'commons-validator', version: '1.6'
+	compile group: 'com.github.2gis.winium', name: 'winium-elements-desktop', version: '0.2.0-1'
+	compile group: 'com.github.2gis.winium', name: 'winium-webdriver', version: '0.1.0-1'   
+    testCompile group: 'org.uncommons', name: 'reportng', version: '1.1.4'
+    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
+    testCompile group: 'io.rest-assured', name: 'rest-assured', version: '3.3.0' 
+    
+	compile group: 'com.relevantcodes', name: 'extentreports', version: '2.41.2'
+    compile group: 'org.apache.maven.plugins', name: 'maven-surefire-plugin', version: '2.21.0'
+	compile group: 'org.apache.pdfbox', name: 'pdfbox', version: '2.0.9'
+	compile group: 'javax.mail', name: 'mail', version: '1.4.4'
+	compile group: 'org.apache.commons', name: 'commons-csv', version: '1.6'
+	// https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-s3
+	compile group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.11.438'
+	
+compile group: 'org.codehaus.plexus', name: 'plexus-utils', version: '1.5.7'
+//compile group: 'net.sourceforge.tess4j', name: 'tess4j', version: '1.3.0'
+
+compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
+
+																						   
+   // testCompile group: 'junit', name: 'junit', version:'4.4' 
+  //  compile group: 'org.aspectj', name:'aspectjweaver', version:'1.8.10'
+  //  testCompile group: 'ru.yandex.qatools.allure', name:'allure-testng-adaptor', version:'1.5.4'
+}
+
+repositories {
+   flatDir {
+       dirs 'lib'
+   }
+}
+
+
+dependencies {
+   compile name: 'sikulixapi'
+   compile name: 'jacob'
+   compile name: 'AutoItJavaPlugin'
+}
+
+
+task(runMain, type: JavaExec){   
+    //Delete existing Test Suite directory 
+    delete "./TestSuites/"
+    println "Successfully deleted Test Suite Folder"
+	
+	//Create a Test Suite directory
+	mkdir "./TestSuites/"
+	println "Successfully created  Test Suite Directory"
+	
+	 //Delete existing Test Suite directory 
+    delete "./testng-Output/"
+    println "Successfully deleted testng-Output Folder"
+	
+	//Call the TestNGSuiteCreator
+	main = "com.demo.util.TestNGSuiteCreator"
+	classpath = sourceSets.test.runtimeClasspath
+}
+
+
+test(){	
+testLogging {
+        // Make sure output from
+        // standard out or error is shown
+        // in Gradle output.
+        showStandardStreams = true
+ 
+        // Or we use events method:
+        // events 'standard_out', 'standard_error'
+ 
+        // Or set property events:
+        // events = ['standard_out', 'standard_error']
+ 
+        // Instead of string values we can
+        // use enum values:
+        // events org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_OUT,
+        //        org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_ERROR,
+    }
+
+	//ignoreFailures = true
+    useTestNG {
+        //set TestNG output dir 
+         scanForTestClasses = false         
+        outputDirectory = file(".//testng-Output")
+        suites "./TestSuites/TestSuite_Main.xml"
+    }   
+    
+    options {
+        listeners << 'org.uncommons.reportng.HTMLReporter'
+        listeners << 'org.uncommons.reportng.JUnitXMLReporter'
+        listeners << 'utils.Listeners.TestListener'
+        listeners << 'com.demo.util.Screenshot'        
+    } 
+    
+}
+   
+task   CopyResults(type:Copy){   
+        print 'copying resutlts'
+        from "testng-Output/"
+        def file1 = new Date().format('yyyyMMddHHmmssSSS')  
+        into ('/Results'+"/${file1}")    
+    }
+
+tasks.test.dependsOn(runMain)
+
+test.finalizedBy(CopyResults)
+
+def getDate() {
+    new Date().format('yyyyMMddHHmmssSSS')
+}
